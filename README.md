@@ -1,87 +1,98 @@
-# Focus Guard — Eye/Head Position Detector
+# VisionFit
 
-A computer-vision desktop app that watches your webcam and plays an audio
-alert when it detects you've been looking down (e.g., at your phone) for
-too long while you're supposed to be working.
+VisionFit is a computer vision-based fitness assistant built using Python, OpenCV and MediaPipe. It tracks body movements through a webcam and counts push-up repetitions in real time. The project also supports offline voice commands, allowing users to start, pause and reset a workout without touching the keyboard.
 
-## Tech stack
+This project was built to explore pose estimation, human movement tracking and voice-controlled interaction using lightweight machine learning models.
 
-| Library     | What it's used for |
-|-------------|---------------------|
-| **OpenCV** (`cv2`) | Captures webcam frames, draws the on-screen overlay (status text, landmark dots, progress bar), shows the live window |
-| **MediaPipe** | Google's ML framework — runs the `FaceLandmarker` model, which returns 478 3D facial landmark points per frame in real time |
-| **NumPy** | Smoothing/averaging the head-tilt score over recent frames |
-| **winsound / afplay / paplay** (stdlib + OS tools) | Plays the audio alert — different backend per OS, no extra audio library required |
-| **threading** | Runs the alert sound in the background so the video feed never freezes |
+## Features
 
-## Setup
+- Real-time push-up repetition counter
+- Pose estimation using MediaPipe
+- Elbow angle calculation for accurate rep detection
+- Offline voice commands using Vosk
+- Start, pause and reset workouts using voice
+- Live pose landmark visualisation
+- Works completely offline
+
+## Tech Stack
+
+- Python
+- OpenCV
+- MediaPipe
+- NumPy
+- Vosk Speech Recognition
+- SoundDevice
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/varen1512/VisionFit.git
+cd VisionFit
+```
+
+Install the required packages:
 
 ```bash
 pip install -r requirements.txt
-python focus_guard.py
 ```
 
-The first run automatically downloads MediaPipe's face landmark model
-(~3–4 MB) into the project folder. After that it works offline.
+Download the Vosk English model from:
 
-## Controls
+https://alphacephei.com/vosk/models
 
-| Key | Action |
-|-----|--------|
-| `c` | Calibrate — look normally at your screen for 3 seconds to set your personal baseline |
-| `+` | Increase sensitivity (alerts on smaller head-down tilts) |
-| `-` | Decrease sensitivity |
-| `q` | Quit |
+Download:
 
-**Run calibration first** — everyone's face shape and camera angle is
-different, so this tunes the detector to you.
+```
+vosk-model-small-en-us-0.15
+```
 
-## How the detection works
+Extract the folder into the project directory.
 
-1. **Face landmarks**: MediaPipe's `FaceLandmarker` returns 478 (x, y, z)
-   points describing the face. We only need 3 of them:
-   - landmark **1** → nose tip
-   - landmark **10** → forehead
-   - landmark **152** → chin
+Run the application:
 
-2. **Pitch score**: We compute where the nose sits, vertically, between
-   the forehead and chin:
+```bash
+python VisionFit.py
+```
 
-   ```
-   pitch_score = (nose.y - forehead.y) / (chin.y - forehead.y)
-   ```
+## Voice Commands
 
-   - Looking straight at the screen → nose sits roughly in the middle
-     (score ≈ 0.45–0.55).
-   - Tilting your head down (looking at a phone) → in the 2D camera
-     image, the nose appears to move *up* toward the forehead due to
-     foreshortening → **score drops**.
+| Command | Action |
+|---------|--------|
+| Start | Starts or resumes the workout |
+| Pause | Pauses the workout while keeping the current rep count |
+| Reset | Resets the repetition counter |
 
-3. **Smoothing**: The last 10 frames' scores are averaged so a quick
-   blink or glance doesn't trigger a false alert.
+## Current Limitations
 
-4. **Sustained check**: Only after the smoothed score stays below
-   `baseline - sensitivity_offset` for **1.5 continuous seconds** does
-   an alert fire — with a **6-second cooldown** so it doesn't spam you.
+- Currently supports push-up detection only
+- Designed for a single person in front of the camera
+- Voice recognition is limited to a few predefined commands
 
-5. **Audio alert**: A 3-tone descending beep, played on a background
-   thread so the camera feed doesn't lag.
+## Future Work
 
-## Resume bullet point ideas
+- Support for multiple exercises
+- Posture correction feedback
+- Workout history and statistics
+- Calorie estimation
+- Desktop application
+- Exercise recommendation system
 
-- *Built "Focus Guard," a real-time computer vision application in
-  Python using OpenCV and MediaPipe's FaceLandmarker model to detect
-  sustained downward head-tilt (phone-distraction behavior) from
-  478-point facial landmarks, with adaptive per-user calibration and
-  audio feedback.*
-- *Designed a head-pose estimation algorithm using facial landmark
-  geometry and rolling-average smoothing to reliably distinguish brief
-  glances from sustained distraction, reducing false positives.*
+## Project Structure
 
-## Possible extensions (good for "what's next" in interviews)
+```
+VisionFit/
+│
+├── VisionFit.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+└── vosk-model-small-en-us-0.15/   # Download separately
+```
 
-- Log distraction events to a CSV/SQLite file and visualize a daily
-  "focus score" with matplotlib.
-- Add a Pomodoro-style session timer with statistics.
-- Use `EAR` (eye aspect ratio) landmarks to also detect drowsiness.
-- Package as a system tray app using `pystray`.
+## Author
+
+**Varen**
+
+GitHub: https://github.com/varen1512
